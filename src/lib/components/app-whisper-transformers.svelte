@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { pipeline, env } from '@huggingface/transformers';
 
 	let media = [];
@@ -11,6 +13,8 @@
 	let transcription = $state('');
 	let isRecorderLoaded = $state(false);
 	let device = $state('wasm');
+
+	let offloadIp = $state('');
 
 	env.backends.onnx.wasm.proxy = true;
 	env.localModelPath = '/';
@@ -107,6 +111,29 @@
 
 	// Load the model on mount
 	onMount(loadModel);
+
+	async function sendOffload() {
+		// generate a post request to specific ip address:
+		console.log('Sending offload request to', offloadIp);
+
+		try {
+			const response = await fetch(offloadIp, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					prompt: transcription
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to fetch');
+			}
+		} catch (error) {
+			console.error('Error sending offload request:', error);
+		}
+	}
 </script>
 
 <Card.Root class="w-[350px]">
@@ -132,14 +159,14 @@
 	<audio controls class="w-full max-w-xs" />
 	<div class="flex space-x-4">
 		<button
-			on:click={startRecording}
+			onclick={startRecording}
 			class="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
 			disabled={!isRecorderLoaded}
 		>
 			Start Recording
 		</button>
 		<button
-			on:click={stopRecording}
+			onclick={stopRecording}
 			class="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
 			disabled={!isRecorderLoaded}
 		>
@@ -149,4 +176,7 @@
 	<p class="text-sm text-gray-500">
 		{!isRecorderLoaded ? 'Loading recorder setup...' : 'Recorder ready. Click to record audio.'}
 	</p>
+
+	<Button onclick={sendOffload}>Offload to dedicated device</Button>
+	<Input bind:value={offloadIp} placeholder="Enter IP address to offload to" />
 </section>

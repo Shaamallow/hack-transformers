@@ -48,7 +48,7 @@
 
 			// Create a text generation pipeline
 			generator = await pipeline('text-generation', 'onnx-community/Llama-3.2-1B-Instruct', {
-				dtype: 'q4f16',
+				dtype: device == 'wasm' ? 'q8' : 'q4f16',
 				device: device
 			});
 
