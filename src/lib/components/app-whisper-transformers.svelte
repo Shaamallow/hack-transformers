@@ -6,22 +6,44 @@
 
 	let media = [];
 	let mediaRecorder = null;
-	let status = 'idle';
+	let status = $state('idle');
 	let transcriber = null;
-	let transcription = '';
-	let isRecorderLoaded = false;
+	let transcription = $state('');
+	let isRecorderLoaded = $state(false);
+	let device = $state('wasm');
 
 	env.backends.onnx.wasm.proxy = true;
 	env.localModelPath = '/';
 	env.allowLocalModels = true;
 	env.allowRemoteModels = false;
 
+	async function isWebGPUSupported() {
+		try {
+			if (!navigator.gpu) {
+				device = 'wasm';
+				throw Error('WebGPU not supported.');
+			}
+			const adapter = await navigator.gpu.requestAdapter();
+			device = 'webgpu';
+			if (!adapter) {
+				device = 'wasm';
+				throw Error("Couldn't request WebGPU adapter.");
+			}
+			return true;
+		} catch (e) {
+			console.error(e);
+			return false;
+		}
+	}
+
 	// Load the Whisper model
 	async function loadModel() {
 		try {
 			status = 'Loading model...';
+			await isWebGPUSupported();
+
 			transcriber = await pipeline('automatic-speech-recognition', 'whisper', {
-				device: 'wasm'
+				device: device
 			});
 			status = 'Model Loaded';
 
