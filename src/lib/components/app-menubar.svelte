@@ -6,7 +6,7 @@
 <Menubar.Root>
 	<Menubar.Menu>
 		<a href="/">
-			<Menubar.Trigger>LLamie</Menubar.Trigger>
+			<Menubar.Trigger>LLami</Menubar.Trigger>
 		</a>
 	</Menubar.Menu>
 
@@ -25,8 +25,8 @@
 	<Menubar.Menu>
 		<Menubar.Trigger>The Team</Menubar.Trigger>
 		<Menubar.Content>
-			<Menubar.Item>Baguette</Menubar.Item>
-			<Menubar.Item>Pizza</Menubar.Item>
+			<Menubar.Item>Baguette 🥖</Menubar.Item>
+			<Menubar.Item>Pizza 🍕</Menubar.Item>
 		</Menubar.Content>
 	</Menubar.Menu>
 </Menubar.Root>

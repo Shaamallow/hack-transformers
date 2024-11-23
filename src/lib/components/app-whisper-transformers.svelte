@@ -1,124 +1,130 @@
 <script>
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
+	import { onMount } from 'svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { pipeline, env } from '@huggingface/transformers';
 
-	// Create a text generation pipeline
-	// Generate a response
-
-	let prompt = $state('');
-	let promptAnswer = $state('');
-	let status = $state('idle');
+	let media = [];
+	let mediaRecorder = null;
+	let status = 'idle';
+	let transcriber = null;
+	let transcription = '';
+	let isRecorderLoaded = false;
 
 	env.backends.onnx.wasm.proxy = true;
 	env.localModelPath = '/';
 	env.allowLocalModels = true;
 	env.allowRemoteModels = false;
 
-	let transcriber = $state();
-
-	let device = $state('wasm');
-
-	let url = 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav';
-
-	async function isWebGPUSupported() {
-		try {
-			if (!navigator.gpu) {
-				device = 'wasm';
-				throw Error('WebGPU not supported.');
-			}
-
-			const adapter = await navigator.gpu.requestAdapter();
-			device = 'webgpu';
-			if (!adapter) {
-				device = 'wasm';
-				throw Error("Couldn't request WebGPU adapter.");
-			}
-			return true;
-		} catch (e) {
-			console.error(e);
-			return false;
-		}
-	}
-
+	// Load the Whisper model
 	async function loadModel() {
 		try {
 			status = 'Loading model...';
-
-			await isWebGPUSupported();
-
-			// Create a text generation pipeline
 			transcriber = await pipeline('automatic-speech-recognition', 'whisper', {
-				device: device
+				device: 'wasm'
 			});
-
 			status = 'Model Loaded';
+
+			// Call loadRecorder once the model is loaded
+			await loadRecorder();
 		} catch (error) {
-			status = 'Error: ' + error;
-			console.log(error);
+			console.error('Error loading model:', error);
+			status = 'Error loading model';
 		}
 	}
 
-	loadModel();
-
-	async function submitPrompt(event) {
-		event.preventDefault();
-		if (status !== 'Model Loaded' && status !== 'Idle') {
-			console.log('status is not correct');
-			promptAnswer = 'Status is not correct, please wait';
-			return;
-		}
+	// Load the recorder setup
+	async function loadRecorder() {
 		try {
-			// Define the list of messages
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			mediaRecorder = new MediaRecorder(stream);
 
-			status = 'Generating...';
+			mediaRecorder.ondataavailable = (e) => media.push(e.data);
 
-			// Generate a response
-			const output = await transcriber(url);
-			console.log(output);
-			promptAnswer = output['text'];
+			mediaRecorder.onstop = async function () {
+				const blob = new Blob(media, { type: 'audio/ogg; codecs=opus' });
+				media = [];
+				const audio = document.querySelector('audio');
+				audio.src = window.URL.createObjectURL(blob);
 
-			status = 'Idle';
+				// Transcription
+				try {
+					status = 'Transcribing...';
+					const output = await transcriber(audio.src);
+					transcription = output['text'];
+					status = 'Idle';
+				} catch (error) {
+					console.error('Error during transcription:', error);
+					transcription = 'Error transcribing audio.';
+					status = 'Idle';
+				}
+			};
+
+			isRecorderLoaded = true;
 		} catch (error) {
-			console.log(error);
-			promptAnswer = 'Error: ' + error;
+			console.error('Error loading recorder:', error);
+			status = 'Error loading recorder';
 		}
 	}
-	function submitForm() {
-		// Programmatically submit the form
-		const form = document.querySelector('form');
-		if (form) {
-			form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+	// Start recording
+	function startRecording() {
+		if (mediaRecorder) {
+			mediaRecorder.start();
+			status = 'Recording...';
 		}
 	}
+
+	// Stop recording
+	function stopRecording() {
+		if (mediaRecorder) {
+			mediaRecorder.stop();
+			status = 'Processing...';
+		}
+	}
+
+	// Load the model on mount
+	onMount(loadModel);
 </script>
 
 <Card.Root class="w-[350px]">
 	<Card.Header>
 		<Card.Title>Call Whisper using Transformers.js</Card.Title>
-		<Card.Description>Thank you Huggingface for the lib 🤗</Card.Description>
+		<Card.Description>Record and transcribe audio with Whisper 🤗</Card.Description>
 	</Card.Header>
 	<Card.Content>
 		<div class="pb-2 text-sm text-muted-foreground">Status: {status}</div>
-		<form onsubmit={submitPrompt}>
-			<div class="flex flex-col space-y-1.5">
-				<Input id="greet-input" placeholder="Here is your name" bind:value={prompt} />
-			</div>
-		</form>
 	</Card.Content>
-	<Card.Footer class="flex justify-between">
-		<Button variant="outline">Cancel</Button>
-		<Button onclick={submitForm}>Submit</Button>
-	</Card.Footer>
 	<Card.Footer class="flex justify-center">
 		<Textarea
 			id="result"
 			disabled
 			class="max-w-xs"
-			placeholder="Llama answer"
-			bind:value={promptAnswer}
+			placeholder="Transcription will appear here"
+			bind:value={transcription}
 		/>
 	</Card.Footer>
 </Card.Root>
+
+<section class="mt-8 flex flex-col items-center space-y-4">
+	<audio controls class="w-full max-w-xs" />
+	<div class="flex space-x-4">
+		<button
+			on:click={startRecording}
+			class="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+			disabled={!isRecorderLoaded}
+		>
+			Start Recording
+		</button>
+		<button
+			on:click={stopRecording}
+			class="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+			disabled={!isRecorderLoaded}
+		>
+			Stop Recording
+		</button>
+	</div>
+	<p class="text-sm text-gray-500">
+		{!isRecorderLoaded ? 'Loading recorder setup...' : 'Recorder ready. Click to record audio.'}
+	</p>
+</section>

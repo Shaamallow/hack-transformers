@@ -18,7 +18,7 @@
 			<h1
 				class="font-display anim-gradient bg-secondary bg-clip-text pb-3 text-center text-4xl font-bold group-hover:text-transparent md:text-5xl"
 			>
-				LLamie
+				LLami
 			</h1>
 		</div>
 
