@@ -21,7 +21,8 @@
 
 			// Create a text generation pipeline
 			generator = await pipeline('text-generation', 'onnx-community/Llama-3.2-1B-Instruct', {
-				dtype: 'q4f16'
+				dtype: 'q4f16',
+				device: 'webgpu'
 			});
 
 			status = 'Model Loaded';

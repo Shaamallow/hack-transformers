@@ -22,7 +22,9 @@
 			status = 'Loading model...';
 
 			// Create translation pipeline
-			transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+			transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+				device: 'webgpu'
+			});
 
 			status = 'Model Loaded';
 		} catch (error) {
