@@ -15,6 +15,8 @@
 	env.backends.onnx.wasm.proxy = true;
 	let generator = $state();
 
+	let device = $state('webgpu');
+
 	async function loadModel() {
 		try {
 			status = 'Loading model...';
