@@ -13,6 +13,10 @@
 	let status = $state('idle');
 
 	env.backends.onnx.wasm.proxy = true;
+	env.localModelPath = '/';
+	env.allowLocalModels = true;
+	env.allowRemoteModels = false;
+
 	let transcriber = $state();
 
 	let device = $state('wasm');
@@ -46,7 +50,7 @@
 			await isWebGPUSupported();
 
 			// Create a text generation pipeline
-			transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+			transcriber = await pipeline('automatic-speech-recognition', 'whisper', {
 				device: device
 			});
 

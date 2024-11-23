@@ -13,6 +13,10 @@
 	let status = $state('idle');
 
 	env.backends.onnx.wasm.proxy = true;
+	env.localModelPath = '/';
+	env.allowLocalModels = true;
+	env.allowRemoteModels = false;
+
 	let generator = $state();
 
 	let device = $state('wasm');
@@ -44,7 +48,7 @@
 			await isWebGPUSupported();
 
 			// Create a text generation pipeline
-			generator = await pipeline('text-generation', 'onnx-community/Llama-3.2-1B-Instruct', {
+			generator = await pipeline('text-generation', 'llama', {
 				dtype: 'q4f16',
 				device: device
 			});
