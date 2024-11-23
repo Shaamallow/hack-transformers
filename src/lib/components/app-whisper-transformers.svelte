@@ -55,7 +55,8 @@
 			await loadRecorder();
 		} catch (error) {
 			console.error('Error loading model:', error);
-			status = 'Error loading model';
+			alert(error);
+			status = error;
 		}
 	}
 
@@ -68,7 +69,7 @@
 			mediaRecorder.ondataavailable = (e) => media.push(e.data);
 
 			mediaRecorder.onstop = async function () {
-				const blob = new Blob(media, { type: 'audio/ogg; codecs=opus' });
+				const blob = new Blob(media, { type: 'audio/*' });
 				media = [];
 				const audio = document.querySelector('audio');
 				audio.src = window.URL.createObjectURL(blob);
@@ -89,7 +90,7 @@
 			isRecorderLoaded = true;
 		} catch (error) {
 			console.error('Error loading recorder:', error);
-			status = 'Error loading recorder';
+			status = error;
 		}
 	}
 
