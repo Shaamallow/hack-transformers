@@ -13,6 +13,8 @@
 	let status = $state('idle');
 
 	env.backends.onnx.wasm.proxy = true;
+	env.allowLocalModels = false;
+	env.allowRemoteModels = true;
 
 	let generator = $state();
 
