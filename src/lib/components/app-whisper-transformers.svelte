@@ -4,7 +4,6 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { pipeline, env } from '@huggingface/transformers';
-	import * as ort from 'onnxruntime-web';
 
 	// Create a text generation pipeline
 	// Generate a response
