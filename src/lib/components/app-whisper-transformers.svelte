@@ -15,15 +15,39 @@
 	env.backends.onnx.wasm.proxy = true;
 	let transcriber = $state();
 
+	let device = $state('wasm');
+
 	let url = 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav';
+
+	async function isWebGPUSupported() {
+		try {
+			if (!navigator.gpu) {
+				device = 'wasm';
+				throw Error('WebGPU not supported.');
+			}
+
+			const adapter = await navigator.gpu.requestAdapter();
+			device = 'webgpu';
+			if (!adapter) {
+				device = 'wasm';
+				throw Error("Couldn't request WebGPU adapter.");
+			}
+			return true;
+		} catch (e) {
+			console.error(e);
+			return false;
+		}
+	}
 
 	async function loadModel() {
 		try {
 			status = 'Loading model...';
 
-			// Create translation pipeline
+			await isWebGPUSupported();
+
+			// Create a text generation pipeline
 			transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
-				device: 'webgpu'
+				device: device
 			});
 
 			status = 'Model Loaded';

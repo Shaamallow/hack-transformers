@@ -15,16 +15,38 @@
 	env.backends.onnx.wasm.proxy = true;
 	let generator = $state();
 
-	let device = $state('webgpu');
+	let device = $state('wasm');
+
+	async function isWebGPUSupported() {
+		try {
+			if (!navigator.gpu) {
+				device = 'wasm';
+				throw Error('WebGPU not supported.');
+			}
+
+			const adapter = await navigator.gpu.requestAdapter();
+			device = 'webgpu';
+			if (!adapter) {
+				device = 'wasm';
+				throw Error("Couldn't request WebGPU adapter.");
+			}
+			return true;
+		} catch (e) {
+			console.error(e);
+			return false;
+		}
+	}
 
 	async function loadModel() {
 		try {
 			status = 'Loading model...';
 
+			await isWebGPUSupported();
+
 			// Create a text generation pipeline
 			generator = await pipeline('text-generation', 'onnx-community/Llama-3.2-1B-Instruct', {
 				dtype: 'q4f16',
-				device: 'webgpu'
+				device: device
 			});
 
 			status = 'Model Loaded';
